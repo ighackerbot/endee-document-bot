@@ -5,7 +5,7 @@ builds context → calls Google Gemini to generate an answer.
 """
 import logging
 from typing import Optional
-import google.generativeai as genai
+from groq import Groq
 
 from app.config import settings
 from app.services.embeddings import embedding_service
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── Prompt Template ────────────────────────────────────────────────
-RAG_PROMPT_TEMPLATE = """You are an intelligent document assistant. Answer the user's question based ONLY on the provided context from their documents. If the context doesn't contain enough information to answer, say so clearly.
+RAG_PROMPT_TEMPLATE = """You are an expert, highly precise AI document analysis assistant. Your sole purpose is to extract and synthesize information strictly from the provided context.
 
 ## Context from Documents:
 {context}
@@ -24,22 +24,23 @@ RAG_PROMPT_TEMPLATE = """You are an intelligent document assistant. Answer the u
 ## User Question:
 {question}
 
-## Instructions:
-- Answer based ONLY on the provided context
-- Be specific and cite which part of the document your answer comes from
-- If the context is insufficient, say "I couldn't find enough information in the uploaded documents to fully answer this question."
-- Format your answer clearly with proper paragraphs
-- Keep your answer concise but comprehensive"""
+## CRITICAL INSTRUCTIONS - YOU MUST OBEY THESE STRICTLY:
+1. PREVENT HALLUCINATIONS: You must base your answer *entirely* and *exclusively* on the Context provided above. Do NOT use outside knowledge, assume facts, or make up information.
+2. EXPLICIT REFUSAL: If the provided Context does NOT contain the exact information needed to directly answer the User Question, you MUST refuse to answer by stating exactly: "I cannot answer this question because the information is not present in the uploaded documents." Do not attempt to guess or provide partial external knowledge.
+3. CITATION: Every claim or fact in your answer must include an inline citation indicating which source file and chunk provided that fact (e.g., [Source 1 — filename.pdf, Chunk 3]).
+4. STRUCTURED FORMAT: You must format your final answer strictly using the following structure:
+   - **Direct Answer:** A concise, 1-2 sentence direct response.
+   - **Key Details:** A bulleted list of specific details, metrics, or facts directly derived from the context.
+5. NO FLUFF: Do not include conversational filler like "Based on the provided documents..." Simply output the mandatory structured format directly."""
 
 
-def initialize_gemini():
-    """Configure the Gemini API client."""
-    if settings.GEMINI_API_KEY:
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        logger.info("Gemini API configured successfully")
+def initialize_llm():
+    """Check Groq API configuration."""
+    if settings.GROQ_API_KEY:
+        logger.info("Groq API configured successfully")
     else:
         logger.warning(
-            "GEMINI_API_KEY not set — RAG generation will use fallback mode"
+            "GROQ_API_KEY not set — RAG generation will use fallback mode"
         )
 
 
@@ -51,7 +52,7 @@ async def generate_answer(
     1. Embed the user query
     2. Search Endee for relevant document chunks
     3. Build context from top-k results
-    4. Generate answer using Gemini (or fallback)
+    4. Generate answer using Groq (or fallback)
 
     Args:
         query: User's question
@@ -87,6 +88,10 @@ async def generate_answer(
         meta = result.get("meta", {})
         score = result.get("score", 0.0)
 
+        # Filter out extremely low-relevance matches (e.g., conversational "hii")
+        if score < 0.25:
+            continue
+
         # Get the full chunk text from document store
         chunk_text = meta.get("text", "")
         result_doc_id = meta.get("doc_id", "")
@@ -112,6 +117,13 @@ async def generate_answer(
             }
         )
 
+    if not sources:
+        return {
+            "answer": "I couldn't find any relevant information in the uploaded documents. Please make sure your question is related to the documents.",
+            "sources": [],
+            "query": query,
+        }
+
     context = "\n\n---\n\n".join(context_parts)
 
     # Trim context to max length
@@ -122,13 +134,21 @@ async def generate_answer(
     prompt = RAG_PROMPT_TEMPLATE.format(context=context, question=query)
 
     try:
-        if settings.GEMINI_API_KEY:
-            answer = await _call_gemini(prompt)
+        if settings.GROQ_API_KEY:
+            answer = await _call_groq(prompt)
         else:
             answer = _fallback_answer(query, sources, context_parts)
     except Exception as e:
         logger.error(f"LLM generation error: {e}")
-        answer = _fallback_answer(query, sources, context_parts)
+        error_msg = str(e)
+        
+        # Pass meaningful API errors to the frontend
+        if "429" in error_msg or "rate_limit" in error_msg.lower():
+            answer = f"⚠️ **Groq API Error:** Your API key has exceeded its rate limit. Please wait and try again."
+        elif "authentication" in error_msg.lower() or "401" in error_msg or "403" in error_msg:
+            answer = f"⚠️ **Groq API Error:** The provided API key is invalid. Please check your `.env` file."
+        else:
+            answer = _fallback_answer(query, sources, context_parts)
 
     return {
         "answer": answer,
@@ -137,11 +157,17 @@ async def generate_answer(
     }
 
 
-async def _call_gemini(prompt: str) -> str:
-    """Call Google Gemini API for answer generation."""
-    model = genai.GenerativeModel(settings.GEMINI_MODEL)
-    response = model.generate_content(prompt)
-    return response.text
+async def _call_groq(prompt: str) -> str:
+    """Call Groq API for answer generation."""
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    response = client.chat.completions.create(
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        model=settings.GROQ_MODEL,
+        temperature=0.2, # Low temperature for more factual responses
+    )
+    return response.choices[0].message.content
 
 
 def _fallback_answer(
@@ -155,7 +181,7 @@ def _fallback_answer(
         return "No relevant documents found."
 
     answer_parts = [
-        f"**Based on your documents, here are the most relevant passages for:** *\"{query}\"*\n",
+        f"**Search Results for:** *\"{query}\"*\n",
     ]
 
     for i, (source, text) in enumerate(zip(sources, context_parts)):
@@ -166,7 +192,7 @@ def _fallback_answer(
         )
 
     answer_parts.append(
-        "\n*💡 Tip: Set the `GEMINI_API_KEY` environment variable to enable AI-generated answers.*"
+        "\n*💡 Tip: Set the `GROQ_API_KEY` environment variable to enable AI-generated answers.*"
     )
 
     return "\n".join(answer_parts)
