@@ -69,7 +69,7 @@ async def upload_document(file: UploadFile = File(...)):
         )
 
 
-@router.get("/")
+@router.get("")
 async def list_documents():
     """List all uploaded and processed documents."""
     docs = get_all_documents()

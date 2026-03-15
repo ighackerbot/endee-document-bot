@@ -31,7 +31,7 @@ class ChatResponse(BaseModel):
     query: str
 
 
-@router.post("/", response_model=ChatResponse)
+@router.post("", response_model=ChatResponse)
 async def chat_with_documents(request: ChatRequest):
     """
     Chat with your documents using RAG.
