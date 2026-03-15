@@ -9,12 +9,16 @@ const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' 
 
 async function request(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
+
+    // Default headers, merge with any custom headers
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
     const response = await fetch(url, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
         ...options,
+        headers,
     });
 
     if (!response.ok) {
