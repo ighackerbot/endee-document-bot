@@ -2,7 +2,10 @@
  * API Client — communicates with the FastAPI backend.
  */
 
-const API_BASE = 'http://localhost:8000/api';
+// If VITE_API_URL is provided (e.g. in Vercel), use it.
+// Else if in production mode (Vite build/Nginx), use relative path.
+// Else local dev environment.
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api');
 
 async function request(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
