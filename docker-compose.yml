@@ -18,7 +18,7 @@ services:
       NDD_AUTH_TOKEN: ""
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api/v1/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,6 +40,18 @@ services:
     depends_on:
       endee:
         condition: service_healthy
+    restart: unless-stopped
+
+  # ── React Frontend ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dochat-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
     restart: unless-stopped
 
 volumes:
