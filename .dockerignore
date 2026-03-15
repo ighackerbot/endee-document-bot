@@ -1,0 +1,10 @@
+# Exclude everything except what the backend needs
+endee/
+endee-data/
+frontend/
+*.md
+sample_doc.txt
+render.yaml
+railway.json
+docker-compose.yml
+.git/
