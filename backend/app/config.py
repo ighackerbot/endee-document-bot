@@ -2,7 +2,9 @@
 Application configuration — environment variables and settings.
 """
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Settings:
     # ── Endee Vector Database ──────────────────────────────────────────
@@ -14,9 +16,9 @@ class Settings:
     # ── Embedding Model ───────────────────────────────────────────────
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
-    # ── Google Gemini (LLM for RAG) ───────────────────────────────────
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    # ── Groq (LLM for RAG) ───────────────────────────────────
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # ── Document Processing ───────────────────────────────────────────
     CHUNK_SIZE: int = 500
