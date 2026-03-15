@@ -21,6 +21,6 @@ services:
       - key: PORT
         value: "8000"
       - key: ENDEE_HOST
-        value: "http://endee-vector-db:8080" # Connects internally to Endee
+        value: "http://endee-vector-db.railway.internal:8080"
       - key: GEMINI_API_KEY
         sync: false # You must set this manually in the Render Dashboard
