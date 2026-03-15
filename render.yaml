@@ -1,0 +1,29 @@
+services:
+  # ── Endee Vector DB (Private Service) ──────────────────────
+  # Runs Endee internally, inaccessible from the public internet.
+  - type: pserv
+    name: endee-vector-db
+    env: docker
+    image: endeeio/endee-server:latest
+    disk:
+      name: endee-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NDD_NUM_THREADS
+        value: "0"
+
+  # ── FastAPI Backend (Web Service) ──────────────────────────
+  # The public-facing backend that handles file uploads and RAG.
+  - type: web
+    name: docchat-backend
+    env: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: ENDEE_HOST
+        value: "http://endee-vector-db:8080" # Connects internally to Endee
+      - key: GEMINI_API_KEY
+        sync: false # You must set this manually in the Render Dashboard
