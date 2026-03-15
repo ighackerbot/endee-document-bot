@@ -63,7 +63,7 @@ export async function uploadDocument(file, onProgress) {
 }
 
 export async function getDocuments() {
-    return request('/documents/');
+    return request('/documents');
 }
 
 export async function deleteDocument(docId) {
@@ -72,7 +72,7 @@ export async function deleteDocument(docId) {
 
 // ── Chat (RAG) ────────────────────────────────────────────────
 export async function sendMessage(query, docId = null) {
-    return request('/chat/', {
+    return request('/chat', {
         method: 'POST',
         body: JSON.stringify({ query, doc_id: docId }),
     });
@@ -80,7 +80,7 @@ export async function sendMessage(query, docId = null) {
 
 // ── Search ────────────────────────────────────────────────────
 export async function searchDocuments(query, topK = 10, docId = null) {
-    return request('/search/', {
+    return request('/search', {
         method: 'POST',
         body: JSON.stringify({ query, top_k: topK, doc_id: docId }),
     });
