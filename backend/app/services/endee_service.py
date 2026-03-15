@@ -21,7 +21,8 @@ class EndeeService:
         """Connect to Endee and ensure the documents index exists."""
         try:
             self.client = Endee()
-            base_url = f"{settings.ENDEE_HOST}/api/v1"
+            host = settings.ENDEE_HOST.rstrip("/")
+            base_url = f"{host}/api/v1"
             self.client.set_base_url(base_url)
 
             if settings.ENDEE_AUTH_TOKEN:
