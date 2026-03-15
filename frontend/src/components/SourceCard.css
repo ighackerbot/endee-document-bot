@@ -1,0 +1,116 @@
+.source-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    animation: slideUp var(--transition-slow) ease-out both;
+}
+
+.source-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--glass-border-hover);
+}
+
+.source-card.expanded {
+    border-color: rgba(102, 126, 234, 0.2);
+    background: rgba(102, 126, 234, 0.04);
+}
+
+.source-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.source-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rank-number {
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+}
+
+.source-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.source-filename {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.source-chunk {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.source-score {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.score-bar {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    background: var(--gradient-accent);
+    border-radius: 2px;
+    transition: width var(--transition-slow);
+}
+
+.score-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-accent);
+    min-width: 28px;
+    text-align: right;
+}
+
+.source-toggle {
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: transform var(--transition-base);
+}
+
+.source-toggle.open {
+    transform: rotate(180deg);
+}
+
+.source-body {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.source-preview {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
