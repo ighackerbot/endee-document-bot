@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import './DocumentUpload.css';
 import { uploadDocument } from '../services/api';
+import { FileUpload } from './ui/file-upload';
+import { AlertTriangle, X } from 'lucide-react';
 
 export default function DocumentUpload({ onUploadComplete }) {
     const [isDragOver, setIsDragOver] = useState(false);
@@ -18,7 +19,7 @@ export default function DocumentUpload({ onUploadComplete }) {
 
         try {
             const result = await uploadDocument(file, (pct) => setProgress(pct));
-            setStatus(`✓ "${file.name}" processed — ${result.document.num_chunks} chunks created`);
+            setStatus(`Successfully processed "${file.name}" — ${result.document.num_chunks} chunks`);
             setProgress(100);
             if (onUploadComplete) onUploadComplete(result.document);
             setTimeout(() => {
@@ -48,42 +49,28 @@ export default function DocumentUpload({ onUploadComplete }) {
     }, [handleUpload]);
 
     return (
-        <div
-            className={`upload-zone ${isDragOver ? 'drag-over' : ''} ${uploading ? 'uploading' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={onDrop}
-            onClick={() => !uploading && fileInputRef.current?.click()}
-        >
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.txt,.md"
-                onChange={onFileSelect}
-                style={{ display: 'none' }}
-            />
+        <div className="w-full relative">
+            <FileUpload onChange={handleUpload} />
 
-            {uploading ? (
-                <div className="upload-progress">
-                    <div className="upload-spinner" />
-                    <p className="upload-status">{status}</p>
-                    <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+            {uploading && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-zinc-900/90 backdrop-blur-sm rounded-xl border border-white/10">
+                    <div className="w-8 h-8 rounded-full border-2 border-zinc-500 border-t-white animate-spin mb-3"></div>
+                    <span className="text-zinc-300 text-sm font-medium mb-3 px-4 text-center">{status}</span>
+                    <div className="w-3/4 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${progress}%` }} />
                     </div>
-                    <span className="progress-text">{progress}%</span>
-                </div>
-            ) : (
-                <div className="upload-content">
-                    <div className="upload-icon">📄</div>
-                    <p className="upload-title">Drop documents here</p>
-                    <p className="upload-subtitle">or click to browse — PDF, DOCX, TXT, MD</p>
                 </div>
             )}
 
             {error && (
-                <div className="upload-error animate-slide-up">
-                    <span>⚠️ {error}</span>
-                    <button onClick={(e) => { e.stopPropagation(); setError(''); }}>✕</button>
+                <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex justify-between items-start gap-2">
+                    <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>{error}</span>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); setError(''); }} className="hover:text-red-300 p-0.5">
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
             )}
         </div>
