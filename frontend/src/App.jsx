@@ -12,7 +12,10 @@ export default function App() {
 
   return (
     <AuroraBackground>
-      <div className="flex w-full h-full z-10 relative">
+      {/* We use SidebarProvider (if available from Aceternity) or standard flex to manage layout */}
+      <div className="flex w-full h-full z-10 relative overflow-hidden">
+
+        {/* Sidebar Component */}
         <Sidebar
           documents={documents}
           setDocuments={setDocuments}
@@ -22,7 +25,8 @@ export default function App() {
           setActiveTab={setActiveTab}
         />
 
-        <main className="flex-1 flex flex-col h-full bg-black/20 backdrop-blur-xl border-l border-white/10 overflow-hidden">
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col h-full bg-black/40 backdrop-blur-2xl sm:border-l border-white/10 overflow-hidden relative shadow-2xl transition-all duration-300 w-full">
           {activeTab === 'chat' ? (
             <ChatInterface selectedDoc={selectedDoc} documents={documents} />
           ) : (

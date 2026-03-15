@@ -74,14 +74,20 @@ export const MobileSidebar = ({ className, children, ...props }) => {
     return (
         <div
             className={cn(
-                "h-14 flex flex-row md:hidden items-center justify-between bg-zinc-900 w-full border-b border-white/10 px-4",
+                "h-14 flex flex-row md:hidden items-center justify-between bg-black/40 backdrop-blur-xl w-full border-b border-white/10 px-4 z-50",
                 className
             )}
             {...props}
         >
-            <div className="flex justify-end z-20 w-full">
+            <div className="flex justify-between items-center w-full z-20">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                    </div>
+                    <span className="text-lg font-bold text-white">DocChat AI</span>
+                </div>
                 <IconMenu2
-                    className="text-neutral-200"
+                    className="text-neutral-200 cursor-pointer hover:text-white transition"
                     onClick={() => setOpen(!open)}
                 />
             </div>
@@ -96,12 +102,12 @@ export const MobileSidebar = ({ className, children, ...props }) => {
                             ease: "easeInOut",
                         }}
                         className={cn(
-                            "fixed inset-0 bg-zinc-900 z-[100] flex flex-col p-4",
+                            "fixed inset-0 bg-black/60 backdrop-blur-3xl z-[100] flex flex-col p-4 sm:p-6",
                             className
                         )}
                     >
                         <div
-                            className="absolute right-4 top-4 z-50 text-neutral-200"
+                            className="absolute right-4 top-4 z-50 text-neutral-400 p-2 hover:bg-white/10 rounded-full cursor-pointer transition"
                             onClick={() => setOpen(!open)}
                         >
                             <IconX />
