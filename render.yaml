@@ -3,8 +3,9 @@ services:
   # Runs Endee internally, inaccessible from the public internet.
   - type: pserv
     name: endee-vector-db
-    env: docker
-    image: endeeio/endee-server:latest
+    env: image
+    image:
+      url: endeeio/endee-server:latest
     disk:
       name: endee-data
       mountPath: /data
