@@ -14,7 +14,7 @@ class Settings:
     ENDEE_DIMENSION: int = 384  # Matches all-MiniLM-L6-v2 output dim
 
     # ── Embedding Model ───────────────────────────────────────────────
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # ── Groq (LLM for RAG) ───────────────────────────────────
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
