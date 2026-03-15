@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.services.endee_service import endee_service
 from app.services.embeddings import embedding_service
-from app.services.rag_engine import initialize_gemini
+from app.services.rag_engine import initialize_llm
 from app.routes import documents, chat, search
 
 # ── Logging ────────────────────────────────────────────────────────
@@ -45,8 +45,8 @@ async def lifespan(app: FastAPI):
     logger.info("Connecting to Endee vector database...")
     await endee_service.initialize()
 
-    # Configure Gemini
-    initialize_gemini()
+    # Configure LLM (Groq)
+    initialize_llm()
 
     logger.info("=" * 60)
     logger.info("  All services initialized — ready to serve!")
@@ -94,7 +94,7 @@ async def health_check():
         "version": "1.0.0",
         "endee_connected": endee_service.index is not None,
         "embedding_model": settings.EMBEDDING_MODEL,
-        "gemini_configured": bool(settings.GEMINI_API_KEY),
+        "groq_configured": bool(settings.GROQ_API_KEY),
     }
 
 
