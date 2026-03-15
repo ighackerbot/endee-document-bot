@@ -47,7 +47,8 @@ class EndeeService:
 
         except Exception as e:
             logger.error(f"Failed to initialize Endee: {e}")
-            raise
+            # We don't raise here, so the app can still start and return 
+            # proper CORS headers and 500 JSON errors instead of crashing completely.
 
     def upsert_chunks(
         self,
