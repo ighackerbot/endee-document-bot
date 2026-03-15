@@ -1,15 +1,11 @@
 services:
-  # ── Endee Vector DB (Private Service) ──────────────────────
-  # Runs Endee internally, inaccessible from the public internet.
-  - type: pserv
+  # ── Endee Vector DB ──────────────────────────────────────
+  # Runs Endee as a Web Service to avoid Render's Private Service pricing.
+  - type: web
     name: endee-vector-db
     env: image
     image:
       url: endeeio/endee-server:latest
-    disk:
-      name: endee-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: NDD_NUM_THREADS
         value: "0"
