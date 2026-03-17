@@ -105,17 +105,25 @@ class EndeeService:
 
             formatted = []
             for r in results:
-                meta = r.get("meta", {}) if isinstance(r, dict) else {}
-                result_id = r.get("id", "") if isinstance(r, dict) else ""
-                score = r.get("similarity", 0.0) if isinstance(r, dict) else 0.0
+                # Safely extract data from result objects (which might be pydantic models or dicts)
+                meta = {}
+                result_id = ""
+                score = 0.0
 
-                # Handle different result formats from the SDK
-                if hasattr(r, "id"):
-                    result_id = r.id
-                if hasattr(r, "similarity"):
-                    score = r.similarity
                 if hasattr(r, "meta"):
                     meta = r.meta if r.meta else {}
+                elif isinstance(r, dict):
+                    meta = r.get("meta", {})
+
+                if hasattr(r, "id"):
+                    result_id = r.id
+                elif isinstance(r, dict):
+                    result_id = r.get("id", "")
+
+                if hasattr(r, "similarity"):
+                    score = r.similarity
+                elif isinstance(r, dict):
+                    score = r.get("similarity", 0.0)
 
                 # Filter by doc_id if specified
                 if doc_id and meta.get("doc_id") != doc_id:
