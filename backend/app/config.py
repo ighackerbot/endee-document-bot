@@ -31,7 +31,7 @@ class Settings:
     MAX_CONTEXT_LENGTH: int = 4000
 
     # ── Server ────────────────────────────────────────────────────────
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "./uploads")
+    CLOUDINARY_URL: str = os.getenv("CLOUDINARY_URL", "")
 
 
 settings = Settings()

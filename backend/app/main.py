@@ -34,9 +34,6 @@ async def lifespan(app: FastAPI):
     logger.info("  AI Document Chatbot — Starting up")
     logger.info("=" * 60)
 
-    # Create uploads directory
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-
     # Initialize embedding model
     logger.info("Loading embedding model...")
     embedding_service.initialize()

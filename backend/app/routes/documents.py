@@ -2,7 +2,9 @@
 Document Management Routes — upload, list, and delete documents.
 """
 import os
+import uuid
 import logging
+import cloudinary.uploader
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from app.config import settings
@@ -42,27 +44,33 @@ async def upload_document(file: UploadFile = File(...)):
             detail=f"File too large: {size_mb:.1f}MB. Maximum: {settings.MAX_FILE_SIZE_MB}MB",
         )
 
-    # Save to uploads directory
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(settings.UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as f:
-        f.write(contents)
+    # Upload to Cloudinary instead of saving to local directory
+    try:
+        upload_result = cloudinary.uploader.upload(
+            contents,
+            resource_type="raw",
+            public_id=f"docchat_{uuid.uuid4().hex[:8]}_{file.filename}",
+            use_filename=True,
+            unique_filename=True
+        )
+        file_url = upload_result.get("secure_url")
+        public_id = upload_result.get("public_id")
+    except Exception as e:
+        logger.error(f"Cloudinary upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload document to cloud storage")
 
     try:
-        result = await process_document(file_path, file.filename)
+        result = await process_document(contents, file.filename, file_url, public_id)
         return {
             "status": "success",
             "message": f"Document '{file.filename}' processed successfully",
             "document": result,
         }
     except ValueError as e:
-        # Clean up file on error
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        cloudinary.uploader.destroy(public_id, resource_type="raw")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        cloudinary.uploader.destroy(public_id, resource_type="raw")
         logger.error(f"Document processing failed: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to process document: {str(e)}"
@@ -95,6 +103,7 @@ async def get_document_info(doc_id: str):
             "num_chunks": doc["num_chunks"],
             "total_characters": doc["total_characters"],
             "uploaded_at": doc["uploaded_at"],
+            "file_url": doc.get("file_url", ""),
         },
     }
 

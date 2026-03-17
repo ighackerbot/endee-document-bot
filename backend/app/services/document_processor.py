@@ -12,6 +12,7 @@ from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+import cloudinary.uploader
 from app.config import settings
 from app.services.embeddings import embedding_service
 from app.services.endee_service import endee_service
@@ -21,10 +22,11 @@ logger = logging.getLogger(__name__)
 # ── In-memory document registry (production would use a DB) ────────
 documents_store: dict[str, dict] = {}
 
+import io
 
-def extract_text_from_pdf(file_path: str) -> str:
-    """Extract all text from a PDF file."""
-    reader = PdfReader(file_path)
+def extract_text_from_pdf(contents: bytes) -> str:
+    """Extract all text from a PDF file in memory."""
+    reader = PdfReader(io.BytesIO(contents))
     text_parts = []
     for page in reader.pages:
         page_text = page.extract_text()
@@ -33,32 +35,31 @@ def extract_text_from_pdf(file_path: str) -> str:
     return "\n\n".join(text_parts)
 
 
-def extract_text_from_docx(file_path: str) -> str:
-    """Extract all text from a DOCX file."""
-    doc = DocxDocument(file_path)
+def extract_text_from_docx(contents: bytes) -> str:
+    """Extract all text from a DOCX file in memory."""
+    doc = DocxDocument(io.BytesIO(contents))
     return "\n\n".join(para.text for para in doc.paragraphs if para.text.strip())
 
 
-def extract_text_from_txt(file_path: str) -> str:
-    """Read a plain text or markdown file."""
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        return f.read()
+def extract_text_from_txt(contents: bytes) -> str:
+    """Read a plain text or markdown file from memory."""
+    return contents.decode("utf-8", errors="ignore")
 
 
-def extract_text(file_path: str) -> str:
+def extract_text(contents: bytes, filename: str) -> str:
     """
     Detect file type and extract text accordingly.
 
     Supported: .pdf, .docx, .txt, .md
     """
-    ext = Path(file_path).suffix.lower()
+    ext = Path(filename).suffix.lower()
 
     if ext == ".pdf":
-        return extract_text_from_pdf(file_path)
+        return extract_text_from_pdf(contents)
     elif ext == ".docx":
-        return extract_text_from_docx(file_path)
+        return extract_text_from_docx(contents)
     elif ext in (".txt", ".md"):
-        return extract_text_from_txt(file_path)
+        return extract_text_from_txt(contents)
     else:
         raise ValueError(f"Unsupported file type: {ext}")
 
@@ -80,13 +81,14 @@ def chunk_text(text: str) -> list[str]:
     return [c for c in chunks if len(c.strip()) >= 20]
 
 
-async def process_document(file_path: str, filename: str) -> dict:
+async def process_document(contents: bytes, filename: str, file_url: str = "", public_id: str = "") -> dict:
     """
     Full document ingestion pipeline:
-    1. Extract text from file
+    1. Extract text from file contents
     2. Split into chunks with overlap
     3. Generate embeddings for each chunk
     4. Store embeddings + metadata in Endee
+    5. Save cloud URL in store
 
     Returns:
         Document metadata dict
@@ -96,7 +98,7 @@ async def process_document(file_path: str, filename: str) -> dict:
     logger.info(f"Processing document: {filename} (id={doc_id})")
 
     # Step 1: Extract text
-    text = extract_text(file_path)
+    text = extract_text(contents, filename)
     if not text.strip():
         raise ValueError("No text could be extracted from the document")
 
@@ -129,7 +131,7 @@ async def process_document(file_path: str, filename: str) -> dict:
     endee_service.upsert_chunks(chunk_ids, vectors, metadata_list)
 
     # Step 6: Register document in memory store
-    file_size = os.path.getsize(file_path)
+    file_size = len(contents)
     doc_info = {
         "id": doc_id,
         "filename": filename,
@@ -137,7 +139,8 @@ async def process_document(file_path: str, filename: str) -> dict:
         "num_chunks": len(chunks),
         "total_characters": len(text),
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
-        "file_path": file_path,
+        "file_url": file_url,
+        "public_id": public_id,
         "chunks": chunks,  # Keep full chunks for RAG context
     }
     documents_store[doc_id] = doc_info
@@ -153,6 +156,7 @@ async def process_document(file_path: str, filename: str) -> dict:
         "num_chunks": len(chunks),
         "total_characters": len(text),
         "uploaded_at": doc_info["uploaded_at"],
+        "file_url": file_url
     }
 
 
@@ -166,6 +170,7 @@ def get_all_documents() -> list[dict]:
             "num_chunks": doc["num_chunks"],
             "total_characters": doc["total_characters"],
             "uploaded_at": doc["uploaded_at"],
+            "file_url": doc.get("file_url", ""),
         }
         for doc in documents_store.values()
     ]
@@ -186,12 +191,12 @@ def delete_document(doc_id: str) -> bool:
     # Delete vectors from Endee
     endee_service.delete_by_document(doc_id)
 
-    # Delete the file
+    # Delete the file from Cloudinary
     try:
-        if os.path.exists(doc["file_path"]):
-            os.remove(doc["file_path"])
-    except OSError:
-        pass
+        if doc.get("public_id"):
+            cloudinary.uploader.destroy(doc["public_id"], resource_type="raw")
+    except Exception as e:
+        logger.warning(f"Error removing document from Cloudinary: {e}")
 
     # Remove from memory store
     del documents_store[doc_id]
