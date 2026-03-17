@@ -5,9 +5,24 @@ for index management, vector upsert, search, and deletion.
 import logging
 from typing import Optional
 from endee import Endee, Precision
+from endee.schema import VectorItem
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ── Monkey-patch VectorItem for Pydantic v1/v2 compat ─────────────
+# The Endee SDK's internal validators may call .get() on VectorItem
+# objects. This works in some Python/Pydantic combos but fails on
+# Railway (Python 3.11 + certain Pydantic v2 builds). Adding dict-
+# like methods to VectorItem makes it safe everywhere.
+if not hasattr(VectorItem, 'get'):
+    VectorItem.get = lambda self, key, default=None: getattr(self, key, default)
+if not hasattr(VectorItem, '__getitem__'):
+    VectorItem.__getitem__ = lambda self, key: getattr(self, key)
+if not hasattr(VectorItem, 'keys'):
+    VectorItem.keys = lambda self: list(self.model_fields.keys())
+
+logger.info("VectorItem patched for dict-like access compatibility")
 
 
 class EndeeService:
