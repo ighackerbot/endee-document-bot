@@ -5,7 +5,7 @@ import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 import { MessageSquare, Paperclip, User, Bot, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function ChatInterface({ selectedDoc, documents }) {
+export default function ChatInterface({ selectedDoc, documents, isSidebarOpen }) {
     const storageKey = `chat_${selectedDoc || 'all'}`;
 
     const defaultMessage = {
@@ -86,7 +86,7 @@ export default function ChatInterface({ selectedDoc, documents }) {
     return (
         <div className="flex flex-col h-full relative z-10 w-full">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg">
+            <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg transition-all duration-300 ${!isSidebarOpen ? 'pl-16 sm:pl-16' : ''}`}>
                 <div>
                     <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-100 to-neutral-400 flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-blue-400" /> Document Chat
@@ -115,8 +115,8 @@ export default function ChatInterface({ selectedDoc, documents }) {
                             className={`flex gap-3 sm:gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                         >
                             <div className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full flex-shrink-0 shadow-lg ${msg.role === 'user'
-                                    ? 'bg-gradient-to-tr from-zinc-800 to-zinc-600 text-white border border-white/10'
-                                    : 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                                ? 'bg-gradient-to-tr from-zinc-800 to-zinc-600 text-white border border-white/10'
+                                : 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
                                 }`}>
                                 {msg.role === 'user' ? <User className="w-4 h-4 sm:w-5 sm:h-5" /> : <Bot className="w-4 h-4 sm:w-5 sm:h-5" />}
                             </div>
@@ -124,8 +124,8 @@ export default function ChatInterface({ selectedDoc, documents }) {
                             <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[80%]`}>
                                 <div
                                     className={`px-4 sm:px-6 py-3 sm:py-4 rounded-3xl ${msg.role === 'user'
-                                            ? 'bg-gradient-to-b from-zinc-800 to-zinc-900 border border-white/5 text-neutral-200 rounded-tr-sm shadow-xl'
-                                            : 'bg-black/40 backdrop-blur-md border border-white/10 text-neutral-200 rounded-tl-sm shadow-2xl'
+                                        ? 'bg-gradient-to-b from-zinc-800 to-zinc-900 border border-white/5 text-neutral-200 rounded-tr-sm shadow-xl'
+                                        : 'bg-black/40 backdrop-blur-md border border-white/10 text-neutral-200 rounded-tl-sm shadow-2xl'
                                         } leading-relaxed font-medium text-sm sm:text-base`}
                                     dangerouslySetInnerHTML={{ __html: renderContent(msg.content) }}
                                 />

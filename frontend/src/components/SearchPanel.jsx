@@ -4,7 +4,7 @@ import { searchDocuments } from '../services/api';
 import { Paperclip, AlertTriangle, Telescope, Lightbulb, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SearchPanel({ selectedDoc, documents }) {
+export default function SearchPanel({ selectedDoc, documents, isSidebarOpen }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export default function SearchPanel({ selectedDoc, documents }) {
     return (
         <div className="flex flex-col h-full relative w-full z-10 overflow-hidden">
             {/* Header */}
-            <div className="px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg">
+            <div className={`px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg transition-all duration-300 ${!isSidebarOpen ? 'pl-16 sm:pl-16' : ''}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-1">
                     <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center gap-2">
                         <Search className="w-5 h-5 text-blue-500" />
