@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import SourceCard from './SourceCard';
 import { sendMessage } from '../services/api';
 import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
-import { MessageSquare, Paperclip, User, Bot, BookOpen } from 'lucide-react';
+import { MessageSquare, Paperclip, User, Bot, BookOpen, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ChatInterface({ selectedDoc, documents, isSidebarOpen }) {
@@ -37,7 +37,7 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, loading]);
 
     const selectedDocName = documents?.find(d => d.id === selectedDoc)?.filename;
 
@@ -68,6 +68,11 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
         inputRef.current?.focus();
     };
 
+    const handleClearChat = () => {
+        setMessages([defaultMessage]);
+        localStorage.removeItem(storageKey);
+    };
+
     const renderContent = (text) => {
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -84,9 +89,9 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
     ];
 
     return (
-        <div className="flex flex-col h-full relative z-10 w-full">
+        <div className="flex flex-col h-full relative z-10 w-full overflow-hidden">
             {/* Header */}
-            <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg transition-all duration-300 ${!isSidebarOpen ? 'pl-16 sm:pl-16' : ''}`}>
+            <div className={`flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-xl z-20 shadow-lg transition-all duration-300 ${!isSidebarOpen ? 'pl-16 sm:pl-16' : ''}`}>
                 <div>
                     <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-100 to-neutral-400 flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-blue-400" /> Document Chat
@@ -101,10 +106,21 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
                         </span>
                     )}
                 </div>
+                {/* Clear Chat Button */}
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleClearChat}
+                    title="Clear chat"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Clear chat</span>
+                </motion.button>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32 space-y-8 scrollbar-hide relative">
+            {/* Messages Area — takes remaining height, scrolls internally */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-8 scrollbar-hide">
                 <AnimatePresence initial={false}>
                     {messages.map((msg, i) => (
                         <motion.div
@@ -168,12 +184,12 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
                         </motion.div>
                     )}
                 </AnimatePresence>
-                <div ref={messagesEndRef} className="h-4" />
+                <div ref={messagesEndRef} className="h-2" />
             </div>
 
-            {/* Input Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black via-black/80 to-transparent pt-12 flex flex-col items-center pointer-events-none z-30">
-                <div className="w-full max-w-3xl relative pointer-events-auto">
+            {/* Input — sticky footer, no overlap */}
+            <div className="flex-shrink-0 border-t border-white/5 bg-black/30 backdrop-blur-xl px-4 sm:px-6 py-4 flex flex-col items-center gap-3">
+                <div className="w-full max-w-3xl">
                     <PlaceholdersAndVanishInput
                         placeholders={selectedDoc ? [`Ask about "${selectedDocName}"...`] : placeholders}
                         onChange={(e) => setInput(e.target.value)}
@@ -181,8 +197,8 @@ export default function ChatInterface({ selectedDoc, documents, isSidebarOpen })
                         disabled={loading}
                     />
                 </div>
-                <p className="text-[10px] sm:text-xs text-zinc-500 mt-4 mb-2 text-center pointer-events-auto font-medium tracking-wide">
-                    Powered by Endee Vector Similarity & Groq LLMs
+                <p className="text-[10px] sm:text-xs text-zinc-600 text-center font-medium tracking-wide">
+                    Powered by Endee Vector Similarity &amp; Groq LLMs
                 </p>
             </div>
         </div>
